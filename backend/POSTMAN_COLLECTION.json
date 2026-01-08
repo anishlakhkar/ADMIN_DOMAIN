@@ -1,0 +1,291 @@
+{
+  "info": {
+    "name": "Drug Management System - Admin API",
+    "description": "API collection for Admin persona - Inventory Management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "warehouseId",
+      "value": "001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Get All Products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?warehouseId={{warehouseId}}&page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"],
+              "query": [
+                {
+                  "key": "warehouseId",
+                  "value": "{{warehouseId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "name",
+                  "disabled": true
+                },
+                {
+                  "key": "direction",
+                  "value": "ASC",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Product by SKU",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/MED-001?warehouseId={{warehouseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "MED-001"],
+              "query": [
+                {
+                  "key": "warehouseId",
+                  "value": "{{warehouseId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"skuId\": \"MED-001\",\n  \"warehouseId\": \"001\",\n  \"productName\": \"Amoxicillin 500mg\",\n  \"manufactureName\": \"Pfizer\",\n  \"category\": \"ANTIBIOTICS\",\n  \"description\": \"Broad spectrum antibiotic for bacterial infections\",\n  \"storageType\": \"AMBIENT\",\n  \"price\": 12.50,\n  \"profitMargin\": 5.00,\n  \"requiredPrescription\": true,\n  \"url\": \"https://example.com/amoxicillin\",\n  \"dosageForm\": \"TABLET\",\n  \"thresholdQuantity\": 200,\n  \"strength\": \"500mg\",\n  \"concern\": \"INFECTION\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            }
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"skuId\": \"MED-001\",\n  \"warehouseId\": \"001\",\n  \"productName\": \"Amoxicillin 500mg (Updated)\",\n  \"manufactureName\": \"Pfizer\",\n  \"category\": \"ANTIBIOTICS\",\n  \"description\": \"Updated description\",\n  \"storageType\": \"AMBIENT\",\n  \"price\": 13.00,\n  \"profitMargin\": 5.00,\n  \"requiredPrescription\": true,\n  \"url\": \"https://example.com/amoxicillin\",\n  \"dosageForm\": \"TABLET\",\n  \"thresholdQuantity\": 250,\n  \"strength\": \"500mg\",\n  \"concern\": \"INFECTION\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/MED-001?warehouseId={{warehouseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "MED-001"],
+              "query": [
+                {
+                  "key": "warehouseId",
+                  "value": "{{warehouseId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/MED-001?warehouseId={{warehouseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "MED-001"],
+              "query": [
+                {
+                  "key": "warehouseId",
+                  "value": "{{warehouseId}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stock",
+      "item": [
+        {
+          "name": "Get All Stock",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/stock?warehouseId={{warehouseId}}&page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stock"],
+              "query": [
+                {
+                  "key": "warehouseId",
+                  "value": "{{warehouseId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Stock by SKU",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/stock/MED-001?warehouseId={{warehouseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stock", "MED-001"],
+              "query": [
+                {
+                  "key": "warehouseId",
+                  "value": "{{warehouseId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Low Stock",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/stock/low-stock?warehouseId={{warehouseId}}&threshold=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stock", "low-stock"],
+              "query": [
+                {
+                  "key": "warehouseId",
+                  "value": "{{warehouseId}}"
+                },
+                {
+                  "key": "threshold",
+                  "value": "100"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Stock",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"warehouseId\": \"001\",\n  \"skuId\": \"MED-001\",\n  \"quantity\": 500\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/stock/MED-001?warehouseId={{warehouseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stock", "MED-001"],
+              "query": [
+                {
+                  "key": "warehouseId",
+                  "value": "{{warehouseId}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
