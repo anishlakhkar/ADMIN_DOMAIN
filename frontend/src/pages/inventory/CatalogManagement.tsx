@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, Edit, Trash2, Upload, Download, Eye, Package, User, Building2 } from 'lucide-react';
+import { Search, Package, User, Building2 } from 'lucide-react';
 import { productService, type Product as BackendProduct } from '../../sevices/productService';
 
 interface Product {
@@ -20,7 +20,6 @@ export default function CatalogManagement() {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedCatalogType, setSelectedCatalogType] = useState('all');
   const [selectedWarehouse, setSelectedWarehouse] = useState('001');
-  const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
 
@@ -212,10 +211,10 @@ export default function CatalogManagement() {
               className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Categories</option>
-              <option value="Medications">Medications</option>
-              <option value="Supplements">Supplements</option>
-              <option value="Equipment">Equipment</option>
-              <option value="Supplies">Supplies</option>
+              <option value="MEDICATIONS">Medications</option>
+              <option value="SUPPLEMENTS">Supplements</option>
+              <option value="EQUIPMENTS">Equipments</option>
+              <option value="SUPPLIES">Supplies</option>
             </select>
           </div>
 
@@ -247,22 +246,6 @@ export default function CatalogManagement() {
             </select>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 whitespace-nowrap"
-            >
-              <Plus className="w-5 h-5" />
-              Add Product
-            </button>
-            <button className="px-4 py-2 border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors flex items-center gap-2">
-              <Upload className="w-5 h-5" />
-            </button>
-            <button className="px-4 py-2 border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors flex items-center gap-2">
-              <Download className="w-5 h-5" />
-            </button>
-          </div>
         </div>
       </div>
 
@@ -280,7 +263,6 @@ export default function CatalogManagement() {
                 <th className="px-6 py-3 text-left text-xs text-neutral-600">Stock</th>
                 <th className="px-6 py-3 text-left text-xs text-neutral-600">Status</th>
                 <th className="px-6 py-3 text-left text-xs text-neutral-600">Last Updated</th>
-                <th className="px-6 py-3 text-left text-xs text-neutral-600">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200">
@@ -314,33 +296,11 @@ export default function CatalogManagement() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-neutral-600">{product.lastUpdated}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <button
-                          className="p-1 hover:bg-neutral-100 rounded transition-colors"
-                          title="View"
-                        >
-                          <Eye className="w-4 h-4 text-neutral-600" />
-                        </button>
-                        <button
-                          className="p-1 hover:bg-neutral-100 rounded transition-colors"
-                          title="Edit"
-                        >
-                          <Edit className="w-4 h-4 text-blue-600" />
-                        </button>
-                        <button
-                          className="p-1 hover:bg-neutral-100 rounded transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </button>
-                      </div>
-                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-neutral-500">
+                  <td colSpan={7} className="px-6 py-12 text-center text-neutral-500">
                     No products found. Try adjusting your filters.
                   </td>
                 </tr>
@@ -349,134 +309,13 @@ export default function CatalogManagement() {
           </table>
         </div>
 
-        {/* Pagination */}
+        {/* Product Count */}
         <div className="border-t border-neutral-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-neutral-600">
-              Showing {filteredProducts.length} of {products.length} products
-            </p>
-            <div className="flex gap-2">
-              <button className="px-3 py-1 border border-neutral-300 rounded hover:bg-neutral-50 transition-colors text-sm">
-                Previous
-              </button>
-              <button className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm">
-                1
-              </button>
-              <button className="px-3 py-1 border border-neutral-300 rounded hover:bg-neutral-50 transition-colors text-sm">
-                2
-              </button>
-              <button className="px-3 py-1 border border-neutral-300 rounded hover:bg-neutral-50 transition-colors text-sm">
-                Next
-              </button>
-            </div>
-          </div>
+          <p className="text-sm text-neutral-600">
+            Showing {filteredProducts.length} of {products.length} products
+          </p>
         </div>
       </div>
-
-      {/* Add Product Modal (Simple version - can be expanded) */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-neutral-200 flex items-center justify-between">
-              <h2>Add New Product</h2>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="p-1 hover:bg-neutral-100 rounded transition-colors"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-6">
-              <p className="text-neutral-600 mb-4">
-                Add a new product to your catalog. This is a simplified modal - full form implementation available.
-              </p>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm mb-2">Product Name *</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter product name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm mb-2">SKU *</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g., MED-001"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm mb-2">Category *</label>
-                    <select className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="">Select category</option>
-                      <option>Medications</option>
-                      <option>Supplements</option>
-                      <option>Equipment</option>
-                      <option>Supplies</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm mb-2">Catalog Type *</label>
-                    <select className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="">Select catalog type</option>
-                      <option>MedBuddy</option>
-                      <option>MedBiz</option>
-                      <option>Both</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm mb-2">Price *</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm mb-2">Initial Stock</label>
-                    <input
-                      type="number"
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm mb-2">Description (Optional)</label>
-                  <textarea
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={3}
-                    placeholder="Enter product description..."
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3 mt-6 pt-6 border-t border-neutral-200">
-                <button
-                  onClick={() => {
-                    alert('Product added successfully!');
-                    setShowAddModal(false);
-                  }}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Add Product
-                </button>
-                <button
-                  onClick={() => setShowAddModal(false)}
-                  className="px-6 py-2 border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

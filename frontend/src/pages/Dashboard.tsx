@@ -163,9 +163,10 @@ export default function Dashboard() {
               className="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Categories</option>
-              <option value="med">Medications</option>
-              <option value="sup">Supplements</option>
-              <option value="eq">Equipment</option>
+              <option value="MEDICATIONS">Medications</option>
+              <option value="SUPPLEMENTS">Supplements</option>
+              <option value="EQUIPMENTS">Equipments</option>
+              <option value="SUPPLIES">Supplies</option>
             </select>
 
             <select 
@@ -227,11 +228,8 @@ export default function Dashboard() {
 
       {/* Low Stock Alerts */}
       <div className="bg-white rounded-lg border border-neutral-200">
-        <div className="p-6 border-b border-neutral-200 flex items-center justify-between">
+        <div className="p-6 border-b border-neutral-200">
           <h2 className="text-xl font-semibold text-neutral-900">Low Stock Alerts</h2>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-            Generate PO
-          </button>
         </div>
         <div className="p-6 space-y-3">
           {lowStockAlerts.length > 0 ? (

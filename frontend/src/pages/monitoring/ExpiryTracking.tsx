@@ -162,15 +162,10 @@ export default function ExpiryTracking() {
             className="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">All Categories</option>
-            <option value="VACCINE">Vaccine</option>
-            <option value="ANTIBIOTICS">Antibiotics</option>
-            <option value="ONCOLOGY">Oncology</option>
-            <option value="IRRIGATION_SOLUTION">Irrigation Solution</option>
-            <option value="DIABETES">Diabetes</option>
-            <option value="SKIN_CARE">Skin Care</option>
-            <option value="PAIN_RELIEF">Pain Relief</option>
-            <option value="HEART_HEALTH">Heart Health</option>
-            <option value="EYE_CARE">Eye Care</option>
+            <option value="MEDICATIONS">Medications</option>
+            <option value="SUPPLEMENTS">Supplements</option>
+            <option value="EQUIPMENTS">Equipments</option>
+            <option value="SUPPLIES">Supplies</option>
           </select>
         </div>
         <div className="flex flex-wrap gap-3">
