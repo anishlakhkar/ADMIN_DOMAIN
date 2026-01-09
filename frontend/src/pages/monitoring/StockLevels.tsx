@@ -1,30 +1,66 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Filter, Download } from 'lucide-react';
+import { monitoringService, type StockLevelResponse } from '../../sevices/monitoringService';
+
+interface StockItem {
+  id: string;
+  name: string;
+  sku: string;
+  category: string;
+  stock: number;
+  min: number;
+  max: number;
+  warehouse: string;
+  status: string;
+}
 
 export default function StockLevels() {
   const [filters, setFilters] = useState({
-    warehouse: 'all',
+    warehouse: '001',
     category: 'all',
     status: 'all'
   });
+  const [loading, setLoading] = useState(true);
+  const [stockData, setStockData] = useState<StockItem[]>([]);
 
-  const stockData = [
-    { id: 1, name: 'Amoxicillin 500mg', sku: 'MED-001', category: 'Medications', stock: 450, min: 100, max: 1000, warehouse: 'Warehouse A', status: 'Optimal' },
-    { id: 2, name: 'Ibuprofen 200mg', sku: 'MED-002', category: 'Medications', stock: 120, min: 200, max: 800, warehouse: 'Warehouse B', status: 'Below Min' },
-    { id: 3, name: 'Paracetamol 500mg', sku: 'MED-003', category: 'Medications', stock: 890, min: 150, max: 1000, warehouse: 'Warehouse A', status: 'Optimal' },
-    { id: 4, name: 'Aspirin 75mg', sku: 'MED-004', category: 'Medications', stock: 45, min: 100, max: 500, warehouse: 'Warehouse C', status: 'Critical' },
-    { id: 5, name: 'Metformin 850mg', sku: 'MED-005', category: 'Medications', stock: 320, min: 200, max: 800, warehouse: 'Warehouse B', status: 'Optimal' },
-    { id: 6, name: 'Vitamin C 1000mg', sku: 'SUP-001', category: 'Supplements', stock: 580, min: 150, max: 750, warehouse: 'Warehouse A', status: 'Optimal' },
-    { id: 7, name: 'Vitamin D3 1000IU', sku: 'SUP-012', category: 'Supplements', stock: 78, min: 150, max: 600, warehouse: 'Warehouse A', status: 'Below Min' },
-    { id: 8, name: 'Blood Pressure Monitor', sku: 'EQ-003', category: 'Equipment', stock: 25, min: 20, max: 50, warehouse: 'Warehouse C', status: 'Optimal' }
-  ];
+  // Fetch stock levels from API
+  useEffect(() => {
+    loadStockLevels();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.warehouse, filters.category, filters.status]);
 
-  const filteredData = stockData.filter(item => {
-    if (filters.warehouse !== 'all' && item.warehouse !== filters.warehouse) return false;
-    if (filters.category !== 'all' && item.category !== filters.category) return false;
-    if (filters.status !== 'all' && item.status !== filters.status) return false;
-    return true;
-  });
+  const loadStockLevels = async () => {
+    try {
+      setLoading(true);
+      const warehouseId = filters.warehouse === 'all' ? '001' : filters.warehouse;
+      const category = filters.category === 'all' ? undefined : filters.category;
+      const status = filters.status === 'all' ? undefined : filters.status;
+      
+      const response = await monitoringService.getStockLevels(warehouseId, category, status);
+      
+      // Map backend response to display format
+      const mappedData: StockItem[] = response.map((item) => ({
+        id: item.skuId,
+        name: item.productName,
+        sku: item.skuId,
+        category: item.category,
+        stock: item.stock,
+        min: item.minStock,
+        max: item.maxStock,
+        warehouse: item.warehouse,
+        status: item.status
+      }));
+      
+      setStockData(mappedData);
+    } catch (error) {
+      console.error('Error loading stock levels:', error);
+      setStockData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredData = stockData; // Already filtered by API
 
   return (
     <div className="space-y-6">
@@ -73,10 +109,10 @@ export default function StockLevels() {
               onChange={(e) => setFilters({ ...filters, warehouse: e.target.value })}
               className="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="all">All Warehouses</option>
-              <option value="Warehouse A">Warehouse A</option>
-              <option value="Warehouse B">Warehouse B</option>
-              <option value="Warehouse C">Warehouse C</option>
+              <option value="001">Warehouse 001</option>
+              <option value="002">Warehouse 002</option>
+              <option value="003">Warehouse 003</option>
+              <option value="004">Warehouse 004</option>
             </select>
 
             <select
@@ -85,9 +121,15 @@ export default function StockLevels() {
               className="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Categories</option>
-              <option value="Medications">Medications</option>
-              <option value="Supplements">Supplements</option>
-              <option value="Equipment">Equipment</option>
+              <option value="VACCINE">Vaccine</option>
+              <option value="ANTIBIOTICS">Antibiotics</option>
+              <option value="ONCOLOGY">Oncology</option>
+              <option value="IRRIGATION_SOLUTION">Irrigation Solution</option>
+              <option value="DIABETES">Diabetes</option>
+              <option value="SKIN_CARE">Skin Care</option>
+              <option value="PAIN_RELIEF">Pain Relief</option>
+              <option value="HEART_HEALTH">Heart Health</option>
+              <option value="EYE_CARE">Eye Care</option>
             </select>
 
             <select
@@ -105,20 +147,25 @@ export default function StockLevels() {
 
         {/* Stock Levels Table */}
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-neutral-50 sticky top-0">
-              <tr>
-                <th className="text-left px-6 py-3 text-sm text-neutral-600">Product Name</th>
-                <th className="text-left px-6 py-3 text-sm text-neutral-600">SKU</th>
-                <th className="text-left px-6 py-3 text-sm text-neutral-600">Category</th>
-                <th className="text-left px-6 py-3 text-sm text-neutral-600">Current Stock</th>
-                <th className="text-left px-6 py-3 text-sm text-neutral-600">Min / Max</th>
-                <th className="text-left px-6 py-3 text-sm text-neutral-600">Warehouse</th>
-                <th className="text-left px-6 py-3 text-sm text-neutral-600">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredData.map((item) => (
+          {loading ? (
+            <div className="p-12 text-center text-neutral-600">Loading stock levels...</div>
+          ) : filteredData.length === 0 ? (
+            <div className="p-12 text-center text-neutral-600">No stock data available</div>
+          ) : (
+            <table className="w-full">
+              <thead className="bg-neutral-50 sticky top-0">
+                <tr>
+                  <th className="text-left px-6 py-3 text-sm text-neutral-600">Product Name</th>
+                  <th className="text-left px-6 py-3 text-sm text-neutral-600">SKU</th>
+                  <th className="text-left px-6 py-3 text-sm text-neutral-600">Category</th>
+                  <th className="text-left px-6 py-3 text-sm text-neutral-600">Current Stock</th>
+                  <th className="text-left px-6 py-3 text-sm text-neutral-600">Min / Max</th>
+                  <th className="text-left px-6 py-3 text-sm text-neutral-600">Warehouse</th>
+                  <th className="text-left px-6 py-3 text-sm text-neutral-600">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredData.map((item) => (
                 <tr key={item.id} className="border-t border-neutral-200 hover:bg-neutral-50">
                   <td className="px-6 py-4">{item.name}</td>
                   <td className="px-6 py-4 text-neutral-600">{item.sku}</td>
@@ -150,25 +197,14 @@ export default function StockLevels() {
                     </span>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
         <div className="p-4 border-t border-neutral-200 flex items-center justify-between">
-          <div className="text-sm text-neutral-600">Showing {filteredData.length} of {stockData.length} items</div>
-          <div className="flex gap-2">
-            <button className="px-3 py-1 border border-neutral-300 rounded hover:bg-neutral-50 transition-colors">
-              Previous
-            </button>
-            <button className="px-3 py-1 bg-blue-600 text-white rounded">1</button>
-            <button className="px-3 py-1 border border-neutral-300 rounded hover:bg-neutral-50 transition-colors">
-              2
-            </button>
-            <button className="px-3 py-1 border border-neutral-300 rounded hover:bg-neutral-50 transition-colors">
-              Next
-            </button>
-          </div>
+          <div className="text-sm text-neutral-600">Showing {filteredData.length} items</div>
         </div>
       </div>
     </div>

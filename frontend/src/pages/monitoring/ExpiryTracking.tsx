@@ -1,84 +1,67 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, AlertTriangle, Filter } from "lucide-react";
+import { monitoringService, type ExpiryTrackingResponse } from '../../sevices/monitoringService';
+
+interface ExpiryItem {
+  id: string;
+  batch: string;
+  product: string;
+  sku: string;
+  expiry: string;
+  quantity: number;
+  warehouse: string;
+  daysLeft: number;
+  status: string;
+}
 
 export default function ExpiryTracking() {
   const [timeFilter, setTimeFilter] = useState("all");
+  const [warehouseFilter, setWarehouseFilter] = useState("001");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [expiryData, setExpiryData] = useState<ExpiryItem[]>([]);
 
-  const expiryData = [
-    {
-      id: 1,
-      batch: "BTH-2023-892",
-      product: "Cough Syrup",
-      sku: "MED-089",
-      expiry: "2024-12-20",
-      quantity: 30,
-      warehouse: "Warehouse A",
-      daysLeft: 9,
-      status: "Critical",
-    },
-    {
-      id: 2,
-      batch: "BTH-2024-001",
-      product: "Amoxicillin 500mg",
-      sku: "MED-001",
-      expiry: "2025-01-15",
-      quantity: 200,
-      warehouse: "Warehouse A",
-      daysLeft: 35,
-      status: "Expiring Soon",
-    },
-    {
-      id: 3,
-      batch: "BTH-2024-023",
-      product: "Eye Drops",
-      sku: "MED-056",
-      expiry: "2025-01-28",
-      quantity: 45,
-      warehouse: "Warehouse B",
-      daysLeft: 48,
-      status: "Expiring Soon",
-    },
-    {
-      id: 4,
-      batch: "BTH-2024-045",
-      product: "Insulin Glargine",
-      sku: "MED-078",
-      expiry: "2025-02-28",
-      quantity: 50,
-      warehouse: "Warehouse C",
-      daysLeft: 79,
-      status: "Monitor",
-    },
-    {
-      id: 5,
-      batch: "BTH-2024-067",
-      product: "Antibiotic Cream",
-      sku: "MED-034",
-      expiry: "2025-03-15",
-      quantity: 75,
-      warehouse: "Warehouse A",
-      daysLeft: 94,
-      status: "Monitor",
-    },
-    {
-      id: 6,
-      batch: "BTH-2024-089",
-      product: "Vitamin B Complex",
-      sku: "SUP-023",
-      expiry: "2025-04-10",
-      quantity: 120,
-      warehouse: "Warehouse B",
-      daysLeft: 120,
-      status: "Good",
-    },
-  ];
+  // Fetch expiry tracking data from API
+  useEffect(() => {
+    loadExpiryData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [warehouseFilter, categoryFilter, timeFilter]);
 
-  const filteredData = expiryData.filter((item) => {
-    if (timeFilter === "30") return item.daysLeft <= 30;
-    if (timeFilter === "60") return item.daysLeft <= 60;
-    if (timeFilter === "90") return item.daysLeft <= 90;
-    return true;
-  });
+  const loadExpiryData = async () => {
+    try {
+      setLoading(true);
+      const category = categoryFilter === "all" ? undefined : categoryFilter;
+      const daysFilter = timeFilter === "all" ? undefined : parseInt(timeFilter);
+      
+      const response = await monitoringService.getExpiryTracking(
+        warehouseFilter,
+        category,
+        daysFilter
+      );
+      
+      // Map backend response to display format
+      const mappedData: ExpiryItem[] = response.map((item) => ({
+        id: item.batchId,
+        batch: item.batchId,
+        product: item.productName,
+        sku: item.skuId,
+        expiry: item.expiry.split('T')[0], // Extract date part from ISO string
+        quantity: item.quantity,
+        warehouse: item.warehouse,
+        daysLeft: item.daysLeft,
+        status: item.status
+      }));
+      
+      setExpiryData(mappedData);
+    } catch (error) {
+      console.error('Error loading expiry tracking data:', error);
+      setExpiryData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredData = expiryData; // Already filtered by API
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -159,7 +142,36 @@ export default function ExpiryTracking() {
       <div className="bg-white rounded-lg border border-neutral-200 p-6">
         <div className="flex items-center gap-3 mb-4">
           <Filter className="w-5 h-5 text-neutral-600" />
-          <h2>Filter by Expiry Window</h2>
+          <h2>Filters</h2>
+        </div>
+        <div className="flex flex-wrap gap-3 mb-4">
+          <select
+            value={warehouseFilter}
+            onChange={(e) => setWarehouseFilter(e.target.value)}
+            className="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="001">Warehouse 001</option>
+            <option value="002">Warehouse 002</option>
+            <option value="003">Warehouse 003</option>
+            <option value="004">Warehouse 004</option>
+          </select>
+
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Categories</option>
+            <option value="VACCINE">Vaccine</option>
+            <option value="ANTIBIOTICS">Antibiotics</option>
+            <option value="ONCOLOGY">Oncology</option>
+            <option value="IRRIGATION_SOLUTION">Irrigation Solution</option>
+            <option value="DIABETES">Diabetes</option>
+            <option value="SKIN_CARE">Skin Care</option>
+            <option value="PAIN_RELIEF">Pain Relief</option>
+            <option value="HEART_HEALTH">Heart Health</option>
+            <option value="EYE_CARE">Eye Care</option>
+          </select>
         </div>
         <div className="flex flex-wrap gap-3">
           <button
@@ -210,41 +222,46 @@ export default function ExpiryTracking() {
         <div className="p-6 border-b border-neutral-200">
           <h2>Batch Expiry Details</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-neutral-50 sticky top-0">
-              <tr>
-                <th className="text-left px-6 py-3 text-sm text-neutral-600">
-                  Batch No
-                </th>
-                <th className="text-left px-6 py-3 text-sm text-neutral-600">
-                  Product
-                </th>
-                <th className="text-left px-6 py-3 text-sm text-neutral-600">
-                  SKU
-                </th>
-                <th className="text-left px-6 py-3 text-sm text-neutral-600">
-                  Expiry Date
-                </th>
-                <th className="text-left px-6 py-3 text-sm text-neutral-600">
-                  Days Left
-                </th>
-                <th className="text-left px-6 py-3 text-sm text-neutral-600">
-                  Quantity
-                </th>
-                <th className="text-left px-6 py-3 text-sm text-neutral-600">
-                  Warehouse
-                </th>
-                <th className="text-left px-6 py-3 text-sm text-neutral-600">
-                  Status
-                </th>
-                <th className="text-left px-6 py-3 text-sm text-neutral-600">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredData.map((item) => (
+        {loading ? (
+          <div className="p-12 text-center text-neutral-600">Loading expiry data...</div>
+        ) : filteredData.length === 0 ? (
+          <div className="p-12 text-center text-neutral-600">No expiry data available</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-neutral-50 sticky top-0">
+                <tr>
+                  <th className="text-left px-6 py-3 text-sm text-neutral-600">
+                    Batch No
+                  </th>
+                  <th className="text-left px-6 py-3 text-sm text-neutral-600">
+                    Product
+                  </th>
+                  <th className="text-left px-6 py-3 text-sm text-neutral-600">
+                    SKU
+                  </th>
+                  <th className="text-left px-6 py-3 text-sm text-neutral-600">
+                    Expiry Date
+                  </th>
+                  <th className="text-left px-6 py-3 text-sm text-neutral-600">
+                    Days Left
+                  </th>
+                  <th className="text-left px-6 py-3 text-sm text-neutral-600">
+                    Quantity
+                  </th>
+                  <th className="text-left px-6 py-3 text-sm text-neutral-600">
+                    Warehouse
+                  </th>
+                  <th className="text-left px-6 py-3 text-sm text-neutral-600">
+                    Status
+                  </th>
+                  <th className="text-left px-6 py-3 text-sm text-neutral-600">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredData.map((item) => (
                 <tr
                   key={item.id}
                   className={`border-t border-neutral-200 hover:bg-neutral-50 ${
@@ -299,14 +316,15 @@ export default function ExpiryTracking() {
                     )}
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         <div className="p-4 border-t border-neutral-200 flex items-center justify-between">
           <div className="text-sm text-neutral-600">
-            Showing {filteredData.length} of {expiryData.length} batches
+            Showing {filteredData.length} batches
           </div>
         </div>
       </div>

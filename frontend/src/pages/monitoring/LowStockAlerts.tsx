@@ -1,13 +1,56 @@
+import { useState, useEffect } from 'react';
 import { AlertTriangle, Package, TrendingDown } from 'lucide-react';
+import { monitoringService, type LowStockAlertResponse } from '../../sevices/monitoringService';
+
+interface Alert {
+  id: string;
+  product: string;
+  sku: string;
+  current: number;
+  threshold: number;
+  warehouse: string;
+  daysUntilOut: number;
+  priority: string;
+}
 
 export default function LowStockAlerts() {
-  const alerts = [
-    { id: 1, product: 'Aspirin 75mg', sku: 'MED-004', current: 45, threshold: 100, warehouse: 'Warehouse C', daysUntilOut: 3, priority: 'Critical' },
-    { id: 2, product: 'Ibuprofen 200mg', sku: 'MED-002', current: 120, threshold: 200, warehouse: 'Warehouse B', daysUntilOut: 8, priority: 'High' },
-    { id: 3, product: 'Vitamin D3 1000IU', sku: 'SUP-012', current: 78, threshold: 150, warehouse: 'Warehouse A', daysUntilOut: 12, priority: 'Medium' },
-    { id: 4, product: 'Band-Aids 100ct', sku: 'SUP-045', current: 92, threshold: 180, warehouse: 'Warehouse B', daysUntilOut: 15, priority: 'Medium' },
-    { id: 5, product: 'Thermometer Digital', sku: 'EQ-012', current: 8, threshold: 25, warehouse: 'Warehouse C', daysUntilOut: 5, priority: 'Critical' }
-  ];
+  const [warehouseFilter, setWarehouseFilter] = useState('001');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+
+  // Fetch low stock alerts from API
+  useEffect(() => {
+    loadAlerts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [warehouseFilter, categoryFilter]);
+
+  const loadAlerts = async () => {
+    try {
+      setLoading(true);
+      const category = categoryFilter === 'all' ? undefined : categoryFilter;
+      const response = await monitoringService.getLowStockAlerts(warehouseFilter, category);
+      
+      // Map backend response to display format
+      const mappedAlerts: Alert[] = response.map((item) => ({
+        id: item.skuId,
+        product: item.productName,
+        sku: item.skuId,
+        current: item.currentStock,
+        threshold: item.threshold,
+        warehouse: item.warehouse,
+        daysUntilOut: item.daysUntilOut,
+        priority: item.priority
+      }));
+      
+      setAlerts(mappedAlerts);
+    } catch (error) {
+      console.error('Error loading low stock alerts:', error);
+      setAlerts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -22,6 +65,39 @@ export default function LowStockAlerts() {
       <div>
         <h1>Low Stock Alerts</h1>
         <p className="text-neutral-600 mt-1">Items requiring immediate attention</p>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-lg border border-neutral-200 p-4">
+        <div className="flex flex-wrap gap-3">
+          <select
+            value={warehouseFilter}
+            onChange={(e) => setWarehouseFilter(e.target.value)}
+            className="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="001">Warehouse 001</option>
+            <option value="002">Warehouse 002</option>
+            <option value="003">Warehouse 003</option>
+            <option value="004">Warehouse 004</option>
+          </select>
+
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Categories</option>
+            <option value="VACCINE">Vaccine</option>
+            <option value="ANTIBIOTICS">Antibiotics</option>
+            <option value="ONCOLOGY">Oncology</option>
+            <option value="IRRIGATION_SOLUTION">Irrigation Solution</option>
+            <option value="DIABETES">Diabetes</option>
+            <option value="SKIN_CARE">Skin Care</option>
+            <option value="PAIN_RELIEF">Pain Relief</option>
+            <option value="HEART_HEALTH">Heart Health</option>
+            <option value="EYE_CARE">Eye Care</option>
+          </select>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -58,8 +134,17 @@ export default function LowStockAlerts() {
       </div>
 
       {/* Alert List */}
-      <div className="space-y-3">
-        {alerts.map((alert) => (
+      {loading ? (
+        <div className="bg-white rounded-lg border border-neutral-200 p-12 text-center text-neutral-600">
+          Loading alerts...
+        </div>
+      ) : alerts.length === 0 ? (
+        <div className="bg-white rounded-lg border border-neutral-200 p-12 text-center text-neutral-600">
+          No low stock alerts found. All products are above threshold.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {alerts.map((alert) => (
           <div key={alert.id} className={`bg-white rounded-lg border-2 p-6 ${getPriorityColor(alert.priority)}`}>
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-4 flex-1">
@@ -141,8 +226,9 @@ export default function LowStockAlerts() {
               </div>
             </div>
           </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Bulk Actions */}
       <div className="bg-white rounded-lg border border-neutral-200 p-6">
