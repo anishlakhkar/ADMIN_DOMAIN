@@ -1,5 +1,6 @@
 package com.drugmanagement.entity;
 
+import com.drugmanagement.enums.PersonaType;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 
@@ -24,6 +25,10 @@ public class ProductBatch {
     @Column(nullable = false)
     private Long quantity;
     
+    @Enumerated(EnumType.STRING)
+    @Column(name = "persona_type", nullable = false, length = 10)
+    private PersonaType personaType = PersonaType.BOTH;
+    
     // Constructors
     public ProductBatch() {
     }
@@ -35,6 +40,17 @@ public class ProductBatch {
         this.skuId = skuId;
         this.expiry = expiry;
         this.quantity = quantity;
+        this.personaType = PersonaType.BOTH;
+    }
+    
+    public ProductBatch(String batchId, String warehouseId, String skuId, 
+                       LocalDate expiry, Long quantity, PersonaType personaType) {
+        this.batchId = batchId;
+        this.warehouseId = warehouseId;
+        this.skuId = skuId;
+        this.expiry = expiry;
+        this.quantity = quantity;
+        this.personaType = personaType;
     }
     
     // Getters and Setters
@@ -76,5 +92,13 @@ public class ProductBatch {
     
     public void setQuantity(Long quantity) {
         this.quantity = quantity;
+    }
+    
+    public PersonaType getPersonaType() {
+        return personaType;
+    }
+    
+    public void setPersonaType(PersonaType personaType) {
+        this.personaType = personaType;
     }
 }

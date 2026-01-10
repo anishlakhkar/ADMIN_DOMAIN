@@ -138,23 +138,23 @@ export default function LowStockAlerts() {
           No low stock alerts found. All products are above threshold.
         </div>
       ) : (
-        <div className="space-y-3">
-          {alerts.map((alert) => (
+      <div className="space-y-3">
+        {alerts.map((alert) => (
           <div key={alert.id} className={`bg-white rounded-lg border-2 p-6 ${getPriorityColor(alert.priority)}`}>
             <div className="flex items-start gap-4">
-              <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                alert.priority === 'Critical' ? 'bg-red-200' :
-                alert.priority === 'High' ? 'bg-orange-200' :
-                'bg-yellow-200'
-              }`}>
-                <AlertTriangle className={`w-6 h-6 ${
-                  alert.priority === 'Critical' ? 'text-red-700' :
-                  alert.priority === 'High' ? 'text-orange-700' :
-                  'text-yellow-700'
-                }`} />
-              </div>
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                  alert.priority === 'Critical' ? 'bg-red-200' :
+                  alert.priority === 'High' ? 'bg-orange-200' :
+                  'bg-yellow-200'
+                }`}>
+                  <AlertTriangle className={`w-6 h-6 ${
+                    alert.priority === 'Critical' ? 'text-red-700' :
+                    alert.priority === 'High' ? 'text-orange-700' :
+                    'text-yellow-700'
+                  }`} />
+                </div>
 
-              <div className="flex-1">
+                <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="text-lg">{alert.product}</h3>
                     <span className={`px-2 py-1 rounded text-xs ${
@@ -210,8 +210,8 @@ export default function LowStockAlerts() {
               </div>
             </div>
           </div>
-          ))}
-        </div>
+        ))}
+      </div>
       )}
 
     </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search, Package, User, Building2 } from 'lucide-react';
-import { productService, type Product as BackendProduct } from '../../sevices/productService';
+import { productService } from '../../sevices/productService';
 
 interface Product {
   id: string;
@@ -11,6 +11,7 @@ interface Product {
   stock: number;
   status: 'active' | 'inactive' | 'discontinued';
   catalogType: 'MedBuddy' | 'MedBiz' | 'Both';
+  personaType: 'B2B' | 'B2C' | 'BOTH';
   lastUpdated: string;
 }
 
@@ -41,6 +42,16 @@ export default function CatalogManagement() {
       
       // Map backend products to display format
       const mappedProducts: Product[] = response.content.map((product) => {
+        // Map backend personaType (B2B/B2C/BOTH) to display format (MedBiz/MedBuddy/Both)
+        const personaTypeMap: Record<string, 'MedBuddy' | 'MedBiz' | 'Both'> = {
+          'B2B': 'MedBiz',
+          'B2C': 'MedBuddy',
+          'BOTH': 'Both'
+        };
+        
+        const personaType = product.personaType || 'BOTH';
+        const catalogType = personaTypeMap[personaType] || 'Both';
+        
         return {
           id: product.skuId,
           sku: product.skuId,
@@ -49,7 +60,8 @@ export default function CatalogManagement() {
           price: typeof product.price === 'number' ? product.price : (typeof product.price === 'string' ? parseFloat(product.price) : 0),
           stock: product.quantity || 0,
           status: product.quantity > 0 ? 'active' : 'inactive',
-          catalogType: 'Both', // Default for now
+          catalogType: catalogType,
+          personaType: personaType as 'B2B' | 'B2C' | 'BOTH',
           lastUpdated: new Date().toISOString().split('T')[0]
         };
       });
@@ -95,6 +107,35 @@ export default function CatalogManagement() {
         return 'bg-red-100 text-red-700';
       default:
         return 'bg-neutral-100 text-neutral-700';
+    }
+  };
+
+  const handlePersonaTypeChange = async (skuId: string, newPersonaType: 'B2B' | 'B2C' | 'BOTH') => {
+    try {
+      // Update in backend
+      await productService.updatePersonaType(skuId, selectedWarehouse, newPersonaType);
+      
+      // Update local state
+      setProducts(prevProducts => 
+        prevProducts.map(product => {
+          if (product.sku === skuId) {
+            const personaTypeMap: Record<string, 'MedBuddy' | 'MedBiz' | 'Both'> = {
+              'B2B': 'MedBiz',
+              'B2C': 'MedBuddy',
+              'BOTH': 'Both'
+            };
+            return {
+              ...product,
+              personaType: newPersonaType,
+              catalogType: personaTypeMap[newPersonaType] || 'Both'
+            };
+          }
+          return product;
+        })
+      );
+    } catch (error) {
+      console.error('Error updating persona type:', error);
+      alert('Failed to update persona type. Please try again.');
     }
   };
 
@@ -263,6 +304,7 @@ export default function CatalogManagement() {
                 <th className="px-6 py-3 text-left text-xs text-neutral-600">Stock</th>
                 <th className="px-6 py-3 text-left text-xs text-neutral-600">Status</th>
                 <th className="px-6 py-3 text-left text-xs text-neutral-600">Last Updated</th>
+                <th className="px-6 py-3 text-left text-xs text-neutral-600">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200">
@@ -296,11 +338,22 @@ export default function CatalogManagement() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-neutral-600">{product.lastUpdated}</td>
+                    <td className="px-6 py-4 text-sm">
+                      <select
+                        value={product.personaType}
+                        onChange={(e) => handlePersonaTypeChange(product.sku, e.target.value as 'B2B' | 'B2C' | 'BOTH')}
+                        className="px-3 py-1.5 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      >
+                        <option value="B2B">MedBiz (B2B)</option>
+                        <option value="B2C">MedBuddy (B2C)</option>
+                        <option value="BOTH">Both</option>
+                      </select>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-neutral-500">
+                  <td colSpan={8} className="px-6 py-12 text-center text-neutral-500">
                     No products found. Try adjusting your filters.
                   </td>
                 </tr>

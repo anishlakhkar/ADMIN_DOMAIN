@@ -5,14 +5,16 @@ import com.drugmanagement.dto.ProductRequest;
 import com.drugmanagement.dto.ProductResponse;
 import com.drugmanagement.entity.Product;
 import com.drugmanagement.entity.ProductBatch;
+import com.drugmanagement.entity.Zone;
+import com.drugmanagement.enums.PersonaType;
 import com.drugmanagement.repository.ProductBatchRepository;
 import com.drugmanagement.repository.ProductRepository;
 import com.drugmanagement.repository.WarehouseRepository;
+import com.drugmanagement.repository.ZoneRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,8 +30,11 @@ public class ProductService {
     @Inject
     WarehouseRepository warehouseRepository;
     
+    @Inject
+    ZoneRepository zoneRepository;
+    
     public PageResponse<ProductResponse> getAllProducts(String warehouseId, String search, 
-                                                       int page, int size, String sortBy, String direction) {
+                                                       String personaType, int page, int size, String sortBy, String direction) {
         // Validate warehouse exists
         warehouseRepository.findByWarehouseId(warehouseId)
             .orElseThrow(() -> new NotFoundException("Warehouse not found: " + warehouseId));
@@ -39,6 +44,29 @@ public class ProductService {
             products = productRepository.findByWarehouseIdAndSearch(warehouseId, search);
         } else {
             products = productRepository.findByWarehouseId(warehouseId);
+        }
+        
+        // Filter by persona_type if provided
+        if (personaType != null && !personaType.trim().isEmpty()) {
+            try {
+                PersonaType personaTypeEnum = PersonaType.valueOf(personaType.toUpperCase());
+                products = products.stream()
+                    .filter(p -> {
+                        // B2B can see: B2B and BOTH products
+                        if (personaTypeEnum == PersonaType.B2B) {
+                            return p.getPersonaType() == PersonaType.B2B || p.getPersonaType() == PersonaType.BOTH;
+                        }
+                        // B2C can see: B2C and BOTH products
+                        else if (personaTypeEnum == PersonaType.B2C) {
+                            return p.getPersonaType() == PersonaType.B2C || p.getPersonaType() == PersonaType.BOTH;
+                        }
+                        // For BOTH, show all (or specific filtering logic)
+                        return true;
+                    })
+                    .collect(Collectors.toList());
+            } catch (IllegalArgumentException e) {
+                // Invalid persona type, ignore filter
+            }
         }
         
         // Apply sorting
@@ -98,6 +126,7 @@ public class ProductService {
         product.setThresholdQuantity(request.getThresholdQuantity());
         product.setStrength(request.getStrength());
         product.setConcern(request.getConcern());
+        product.setPersonaType(request.getPersonaType() != null ? request.getPersonaType() : PersonaType.BOTH);
         
         productRepository.persist(product);
         return toResponse(product);
@@ -122,8 +151,28 @@ public class ProductService {
         product.setThresholdQuantity(request.getThresholdQuantity());
         product.setStrength(request.getStrength());
         product.setConcern(request.getConcern());
+        if (request.getPersonaType() != null) {
+            product.setPersonaType(request.getPersonaType());
+        }
         
         productRepository.persist(product);
+        return toResponse(product);
+    }
+    
+    @Transactional
+    public ProductResponse updatePersonaType(String skuId, String warehouseId, PersonaType personaType) {
+        Product product = productRepository.findBySkuIdAndWarehouseId(skuId, warehouseId)
+            .orElseThrow(() -> new NotFoundException("Product not found with SKU: " + skuId + " in warehouse: " + warehouseId));
+        
+        // Validate persona type is not null
+        if (personaType == null) {
+            throw new IllegalArgumentException("Persona type cannot be null");
+        }
+        
+        // Update persona type
+        product.setPersonaType(personaType);
+        productRepository.persist(product);
+        
         return toResponse(product);
     }
     
@@ -132,12 +181,22 @@ public class ProductService {
         Product product = productRepository.findBySkuIdAndWarehouseId(skuId, warehouseId)
             .orElseThrow(() -> new NotFoundException("Product not found with SKU: " + skuId + " in warehouse: " + warehouseId));
         
-        // Check if product has batches
+        // Delete all batches associated with this product (cascade delete)
         List<ProductBatch> batches = productBatchRepository.findBySkuIdAndWarehouseId(skuId, warehouseId);
-        if (!batches.isEmpty()) {
-            throw new IllegalStateException("Cannot delete product with existing batches. Please remove all batches first.");
+        for (ProductBatch batch : batches) {
+            productBatchRepository.delete(batch);
         }
         
+        // Remove product from all zones in the warehouse
+        List<Zone> zones = zoneRepository.findByWarehouseId(warehouseId);
+        for (Zone zone : zones) {
+            if (zone.getProductList().containsKey(skuId)) {
+                zone.getProductList().remove(skuId);
+                zoneRepository.persist(zone);
+            }
+        }
+        
+        // Delete the product
         productRepository.delete(product);
     }
     
@@ -174,6 +233,7 @@ public class ProductService {
         response.setThresholdQuantity(product.getThresholdQuantity());
         response.setStrength(product.getStrength());
         response.setConcern(product.getConcern());
+        response.setPersonaType(product.getPersonaType());
         return response;
     }
     

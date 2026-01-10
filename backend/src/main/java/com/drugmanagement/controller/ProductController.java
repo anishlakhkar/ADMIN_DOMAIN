@@ -3,6 +3,7 @@ package com.drugmanagement.controller;
 import com.drugmanagement.dto.PageResponse;
 import com.drugmanagement.dto.ProductRequest;
 import com.drugmanagement.dto.ProductResponse;
+import com.drugmanagement.dto.UpdatePersonaTypeRequest;
 import com.drugmanagement.service.ProductService;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -22,6 +23,7 @@ public class ProductController {
     public Response getAllProducts(
             @QueryParam("warehouseId") @DefaultValue("001") String warehouseId,
             @QueryParam("search") String search,
+            @QueryParam("personaType") String personaType,
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sortBy") String sortBy,
@@ -29,7 +31,7 @@ public class ProductController {
         
         try {
             PageResponse<ProductResponse> response = productService.getAllProducts(
-                warehouseId, search, page, size, sortBy, direction);
+                warehouseId, search, personaType, page, size, sortBy, direction);
             return Response.ok(response).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -81,6 +83,25 @@ public class ProductController {
         
         try {
             ProductResponse response = productService.updateProduct(skuId, warehouseId, request);
+            return Response.ok(response).build();
+        } catch (jakarta.ws.rs.NotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND)
+                .entity(new ErrorResponse(e.getMessage())).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(new ErrorResponse(e.getMessage())).build();
+        }
+    }
+    
+    @PUT
+    @Path("/{skuId}/persona-type")
+    public Response updatePersonaType(
+            @PathParam("skuId") String skuId,
+            @QueryParam("warehouseId") @DefaultValue("001") String warehouseId,
+            @Valid UpdatePersonaTypeRequest request) {
+        
+        try {
+            ProductResponse response = productService.updatePersonaType(skuId, warehouseId, request.getPersonaType());
             return Response.ok(response).build();
         } catch (jakarta.ws.rs.NotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND)

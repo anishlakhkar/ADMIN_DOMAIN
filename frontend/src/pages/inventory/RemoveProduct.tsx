@@ -70,24 +70,47 @@ export default function RemoveProduct() {
     try {
       if (itemToDelete === 'multiple') {
         // Delete multiple products
+        const deletedCount = selectedIds.length;
+        let successCount = 0;
+        let failedProducts: string[] = [];
+        
         for (const id of selectedIds) {
-          await productService.delete(id, warehouseFilter);
+          try {
+            const product = products.find(p => p.id === id);
+            await productService.delete(id, warehouseFilter);
+            successCount++;
+          } catch (error: any) {
+            const product = products.find(p => p.id === id);
+            const productName = product?.name || id;
+            failedProducts.push(productName);
+            console.error(`Failed to delete product ${id}:`, error);
+          }
         }
+        
         await loadProducts(); // Reload products
         setSelectedIds([]);
-        alert(`${selectedIds.length} products removed successfully`);
+        
+        if (failedProducts.length > 0) {
+          alert(`${successCount} product(s) removed successfully. Failed to remove: ${failedProducts.join(', ')}`);
+        } else {
+          alert(`${successCount} product(s) removed successfully`);
+        }
       } else if (itemToDelete !== null) {
         // Delete single product
         const product = products.find(p => p.id === itemToDelete);
         await productService.delete(itemToDelete, warehouseFilter);
         await loadProducts(); // Reload products
-        alert(`${product?.name} removed successfully`);
+        alert(`${product?.name || itemToDelete} removed successfully`);
       }
       setShowModal(false);
       setItemToDelete(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error removing product:', error);
-      alert('Failed to remove product. Please try again.');
+      // Extract error message from API response
+      const errorMessage = error?.response?.data?.message || 
+                          error?.message || 
+                          'Failed to remove product. Please try again.';
+      alert(errorMessage);
       setShowModal(false);
       setItemToDelete(null);
     }

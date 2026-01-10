@@ -147,20 +147,20 @@ export default function StockLevels() {
           ) : filteredData.length === 0 ? (
             <div className="p-12 text-center text-neutral-600">No stock data available</div>
           ) : (
-            <table className="w-full">
-              <thead className="bg-neutral-50 sticky top-0">
-                <tr>
-                  <th className="text-left px-6 py-3 text-sm text-neutral-600">Product Name</th>
-                  <th className="text-left px-6 py-3 text-sm text-neutral-600">SKU</th>
-                  <th className="text-left px-6 py-3 text-sm text-neutral-600">Category</th>
-                  <th className="text-left px-6 py-3 text-sm text-neutral-600">Current Stock</th>
-                  <th className="text-left px-6 py-3 text-sm text-neutral-600">Min / Max</th>
-                  <th className="text-left px-6 py-3 text-sm text-neutral-600">Warehouse</th>
-                  <th className="text-left px-6 py-3 text-sm text-neutral-600">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredData.map((item) => (
+          <table className="w-full">
+            <thead className="bg-neutral-50 sticky top-0">
+              <tr>
+                <th className="text-left px-6 py-3 text-sm text-neutral-600">Product Name</th>
+                <th className="text-left px-6 py-3 text-sm text-neutral-600">SKU</th>
+                <th className="text-left px-6 py-3 text-sm text-neutral-600">Category</th>
+                <th className="text-left px-6 py-3 text-sm text-neutral-600">Current Stock</th>
+                <th className="text-left px-6 py-3 text-sm text-neutral-600">Min / Max</th>
+                <th className="text-left px-6 py-3 text-sm text-neutral-600">Warehouse</th>
+                <th className="text-left px-6 py-3 text-sm text-neutral-600">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredData.map((item) => (
                 <tr key={item.id} className="border-t border-neutral-200 hover:bg-neutral-50">
                   <td className="px-6 py-4">{item.name}</td>
                   <td className="px-6 py-4 text-neutral-600">{item.sku}</td>
@@ -192,9 +192,9 @@ export default function StockLevels() {
                     </span>
                   </td>
                 </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </tbody>
+          </table>
           )}
         </div>
 

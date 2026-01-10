@@ -17,6 +17,7 @@ export interface Product {
   thresholdQuantity: number;
   strength?: string;
   concern?: string;
+  personaType?: 'B2B' | 'B2C' | 'BOTH';
 }
 
 export interface ProductRequest {
@@ -81,5 +82,18 @@ export const productService = {
     await api.delete(`/products/${skuId}`, {
       params: { warehouseId }
     });
+  },
+
+  updatePersonaType: async (
+    skuId: string,
+    warehouseId: string,
+    personaType: 'B2B' | 'B2C' | 'BOTH'
+  ): Promise<Product> => {
+    const response = await api.put<Product>(
+      `/products/${skuId}/persona-type`,
+      { personaType },
+      { params: { warehouseId } }
+    );
+    return response.data;
   },
 };

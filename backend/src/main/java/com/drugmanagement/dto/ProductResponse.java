@@ -3,6 +3,7 @@ package com.drugmanagement.dto;
 import com.drugmanagement.enums.Category;
 import com.drugmanagement.enums.Concern;
 import com.drugmanagement.enums.DosageForm;
+import com.drugmanagement.enums.PersonaType;
 import com.drugmanagement.enums.StorageType;
 import java.math.BigDecimal;
 
@@ -23,6 +24,7 @@ public class ProductResponse {
     private Long thresholdQuantity;
     private String strength;
     private Concern concern;
+    private PersonaType personaType;
     
     // Getters and Setters
     public String getSkuId() {
@@ -151,5 +153,13 @@ public class ProductResponse {
     
     public void setConcern(Concern concern) {
         this.concern = concern;
+    }
+    
+    public PersonaType getPersonaType() {
+        return personaType;
+    }
+    
+    public void setPersonaType(PersonaType personaType) {
+        this.personaType = personaType;
     }
 }

@@ -222,41 +222,41 @@ export default function ExpiryTracking() {
         ) : filteredData.length === 0 ? (
           <div className="p-12 text-center text-neutral-600">No expiry data available</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-neutral-50 sticky top-0">
-                <tr>
-                  <th className="text-left px-6 py-3 text-sm text-neutral-600">
-                    Batch No
-                  </th>
-                  <th className="text-left px-6 py-3 text-sm text-neutral-600">
-                    Product
-                  </th>
-                  <th className="text-left px-6 py-3 text-sm text-neutral-600">
-                    SKU
-                  </th>
-                  <th className="text-left px-6 py-3 text-sm text-neutral-600">
-                    Expiry Date
-                  </th>
-                  <th className="text-left px-6 py-3 text-sm text-neutral-600">
-                    Days Left
-                  </th>
-                  <th className="text-left px-6 py-3 text-sm text-neutral-600">
-                    Quantity
-                  </th>
-                  <th className="text-left px-6 py-3 text-sm text-neutral-600">
-                    Warehouse
-                  </th>
-                  <th className="text-left px-6 py-3 text-sm text-neutral-600">
-                    Status
-                  </th>
-                  <th className="text-left px-6 py-3 text-sm text-neutral-600">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredData.map((item) => (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-neutral-50 sticky top-0">
+              <tr>
+                <th className="text-left px-6 py-3 text-sm text-neutral-600">
+                  Batch No
+                </th>
+                <th className="text-left px-6 py-3 text-sm text-neutral-600">
+                  Product
+                </th>
+                <th className="text-left px-6 py-3 text-sm text-neutral-600">
+                  SKU
+                </th>
+                <th className="text-left px-6 py-3 text-sm text-neutral-600">
+                  Expiry Date
+                </th>
+                <th className="text-left px-6 py-3 text-sm text-neutral-600">
+                  Days Left
+                </th>
+                <th className="text-left px-6 py-3 text-sm text-neutral-600">
+                  Quantity
+                </th>
+                <th className="text-left px-6 py-3 text-sm text-neutral-600">
+                  Warehouse
+                </th>
+                <th className="text-left px-6 py-3 text-sm text-neutral-600">
+                  Status
+                </th>
+                <th className="text-left px-6 py-3 text-sm text-neutral-600">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredData.map((item) => (
                 <tr
                   key={item.id}
                   className={`border-t border-neutral-200 hover:bg-neutral-50 ${
@@ -311,10 +311,10 @@ export default function ExpiryTracking() {
                     )}
                   </td>
                 </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
         )}
 
         <div className="p-4 border-t border-neutral-200 flex items-center justify-between">

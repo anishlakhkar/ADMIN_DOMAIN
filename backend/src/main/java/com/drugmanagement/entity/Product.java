@@ -3,6 +3,7 @@ package com.drugmanagement.entity;
 import com.drugmanagement.enums.Category;
 import com.drugmanagement.enums.Concern;
 import com.drugmanagement.enums.DosageForm;
+import com.drugmanagement.enums.PersonaType;
 import com.drugmanagement.enums.StorageType;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -65,7 +66,12 @@ public class Product {
     @Column(length = 20)
     private Concern concern;
     
+    @Enumerated(EnumType.STRING)
+    @Column(name = "persona_type", nullable = false, length = 10)
+    private PersonaType personaType = PersonaType.BOTH;
+    
     // Constructors
+    // Empty constructor required by JPA/Hibernate
     public Product() {
     }
     
@@ -196,5 +202,13 @@ public class Product {
     
     public void setConcern(Concern concern) {
         this.concern = concern;
+    }
+    
+    public PersonaType getPersonaType() {
+        return personaType;
+    }
+    
+    public void setPersonaType(PersonaType personaType) {
+        this.personaType = personaType;
     }
 }

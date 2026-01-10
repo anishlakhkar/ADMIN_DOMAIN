@@ -1,6 +1,7 @@
 package com.drugmanagement.repository;
 
 import com.drugmanagement.entity.ProductBatch;
+import com.drugmanagement.enums.PersonaType;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.time.LocalDate;
@@ -30,5 +31,33 @@ public class ProductBatchRepository implements PanacheRepository<ProductBatch> {
     public List<ProductBatch> findLowStockBatches(String warehouseId, String skuId, Long threshold) {
         return find("warehouseId = ?1 AND skuId = ?2 AND quantity <= ?3 ORDER BY expiry ASC", 
                    warehouseId, skuId, threshold).list();
+    }
+    
+    // Find batches by persona type
+    public List<ProductBatch> findByPersonaType(String warehouseId, PersonaType personaType) {
+        // B2B can access: B2B and BOTH batches
+        // B2C can access: B2C and BOTH batches
+        if (personaType == PersonaType.B2B) {
+            return find("warehouseId = ?1 AND (personaType = ?2 OR personaType = ?3) ORDER BY expiry ASC", 
+                       warehouseId, PersonaType.B2B, PersonaType.BOTH).list();
+        } else if (personaType == PersonaType.B2C) {
+            return find("warehouseId = ?1 AND (personaType = ?2 OR personaType = ?3) ORDER BY expiry ASC", 
+                       warehouseId, PersonaType.B2C, PersonaType.BOTH).list();
+        } else {
+            return findByWarehouseId(warehouseId);
+        }
+    }
+    
+    // Find batches by SKU and persona type
+    public List<ProductBatch> findBySkuIdAndPersonaType(String skuId, String warehouseId, PersonaType personaType) {
+        if (personaType == PersonaType.B2B) {
+            return find("skuId = ?1 AND warehouseId = ?2 AND (personaType = ?3 OR personaType = ?4) ORDER BY expiry ASC", 
+                       skuId, warehouseId, PersonaType.B2B, PersonaType.BOTH).list();
+        } else if (personaType == PersonaType.B2C) {
+            return find("skuId = ?1 AND warehouseId = ?2 AND (personaType = ?3 OR personaType = ?4) ORDER BY expiry ASC", 
+                       skuId, warehouseId, PersonaType.B2C, PersonaType.BOTH).list();
+        } else {
+            return findBySkuIdAndWarehouseId(skuId, warehouseId);
+        }
     }
 }
