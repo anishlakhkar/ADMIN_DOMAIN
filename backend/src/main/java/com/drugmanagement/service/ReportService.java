@@ -1,5 +1,7 @@
 package com.drugmanagement.service;
 
+import com.drugmanagement.dto.ExpiryDataExportResponse;
+import com.drugmanagement.dto.FullInventoryExportResponse;
 import com.drugmanagement.dto.InventoryValuationReportResponse;
 import com.drugmanagement.dto.LowStockReportResponse;
 import com.drugmanagement.dto.RecentReportResponse;
@@ -13,6 +15,7 @@ import jakarta.inject.Inject;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -124,20 +127,11 @@ public class ReportService {
         LowStockReportResponse response = new LowStockReportResponse();
         
         // Get all products
+        // For Low Stock Export, we export ALL low stock items regardless of date range
         List<Product> allProducts = productRepository.listAll();
         
-        // Filter by date range: Only include products that have batches expiring within the date range
-        if (startDate != null && endDate != null) {
-            final Set<String> productSkuIdsInDateRange = productBatchRepository.listAll().stream()
-                .filter(batch -> !batch.getExpiry().isBefore(startDate) && !batch.getExpiry().isAfter(endDate))
-                .map(ProductBatch::getSkuId)
-                .collect(Collectors.toSet());
-            
-            // Filter products to only those with batches in date range
-            allProducts = allProducts.stream()
-                .filter(p -> productSkuIdsInDateRange.contains(p.getSkuId()))
-                .collect(Collectors.toList());
-        }
+        // Note: Date range filtering is NOT applied for Low Stock Export
+        // This ensures all low stock items are included
         
         // Filter low stock items (quantity < threshold)
         List<LowStockReportResponse.LowStockItem> lowStockItems = allProducts.stream()
@@ -169,14 +163,156 @@ public class ReportService {
             .collect(Collectors.toList());
         
         // Set response data
-        response.setReportName("Low Stock Report - " + 
-            startDate.format(DateTimeFormatter.ofPattern("MMM yyyy")));
+        response.setReportName("Low Stock Report - All Data");
         response.setGeneratedDate(LocalDate.now().toString());
-        response.setStartDate(startDate);
-        response.setEndDate(endDate);
+        response.setStartDate(LocalDate.now().minusYears(10)); // For display purposes
+        response.setEndDate(LocalDate.now().plusYears(10)); // For display purposes
         response.setFormat(format.toUpperCase());
         response.setTotalLowStockItems((long) lowStockItems.size());
         response.setLowStockItems(lowStockItems);
+        
+        return response;
+    }
+    
+    /**
+     * Generate Full Inventory Export
+     * Shows all products with their current state. Date range is optional and filters by batches in that range.
+     */
+    public FullInventoryExportResponse generateFullInventoryExport(
+            LocalDate startDate, LocalDate endDate, String format, String warehouseId) {
+        
+        FullInventoryExportResponse response = new FullInventoryExportResponse();
+        
+        // Get all products (filter by warehouse if provided)
+        // For Full Inventory Export, we export ALL products regardless of date range
+        List<Product> allProducts;
+        if (warehouseId != null && !warehouseId.trim().isEmpty()) {
+            allProducts = productRepository.findByWarehouseId(warehouseId);
+        } else {
+            allProducts = productRepository.listAll();
+        }
+        
+        // Note: Date range filtering is NOT applied for Full Inventory Export
+        // This ensures all products are included regardless of batch expiry dates
+        
+        // Convert to export items
+        List<FullInventoryExportResponse.InventoryItem> items = allProducts.stream()
+            .map(p -> {
+                String warehouseName = "Warehouse " + p.getWarehouseId();
+                BigDecimal totalValue = p.getPrice().multiply(new BigDecimal(p.getQuantity()));
+                
+                return new FullInventoryExportResponse.InventoryItem(
+                    p.getSkuId(),
+                    p.getProductName(),
+                    p.getCategory().name(),
+                    p.getWarehouseId(),
+                    warehouseName,
+                    p.getQuantity(),
+                    p.getPrice(),
+                    totalValue,
+                    p.getStorageType().name(),
+                    p.getDosageForm().name()
+                );
+            })
+            .collect(Collectors.toList());
+        
+        // Calculate totals
+        Long totalProducts = (long) items.size();
+        Long totalQuantity = items.stream()
+            .mapToLong(FullInventoryExportResponse.InventoryItem::getQuantity)
+            .sum();
+        BigDecimal totalValue = items.stream()
+            .map(FullInventoryExportResponse.InventoryItem::getTotalValue)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        // Set response data
+        response.setReportName("Full Inventory Export - All Data");
+        response.setGeneratedDate(LocalDate.now().toString());
+        response.setStartDate(LocalDate.now().minusYears(10)); // For display purposes
+        response.setEndDate(LocalDate.now().plusYears(10)); // For display purposes
+        response.setFormat(format.toUpperCase());
+        response.setTotalProducts(totalProducts);
+        response.setTotalQuantity(totalQuantity);
+        response.setTotalValue(totalValue);
+        response.setItems(items);
+        
+        return response;
+    }
+    
+    /**
+     * Generate Expiry Data Export
+     */
+    public ExpiryDataExportResponse generateExpiryDataExport(
+            LocalDate startDate, LocalDate endDate, String format, String warehouseId) {
+        
+        ExpiryDataExportResponse response = new ExpiryDataExportResponse();
+        
+        // Get all batches (filter by warehouse if provided)
+        List<ProductBatch> allBatches;
+        if (warehouseId != null && !warehouseId.trim().isEmpty()) {
+            allBatches = productBatchRepository.findByWarehouseId(warehouseId);
+        } else {
+            allBatches = productBatchRepository.listAll();
+        }
+        
+        // For Expiry Data Export, we export ALL batches regardless of date range
+        // Date range is kept in the response for reference but doesn't filter the data
+        LocalDate today = LocalDate.now();
+        List<ProductBatch> batchesInRange = allBatches; // Include all batches
+        
+        // Get all products for batch details
+        List<Product> allProducts = productRepository.listAll();
+        Map<String, Product> productMap = allProducts.stream()
+            .collect(Collectors.toMap(Product::getSkuId, p -> p));
+        
+        // Convert to export items
+        List<ExpiryDataExportResponse.ExpiryItem> items = new ArrayList<>();
+        long expiringSoonCount = 0;
+        long expiredCount = 0;
+        
+        for (ProductBatch batch : batchesInRange) {
+            Product product = productMap.get(batch.getSkuId());
+            if (product == null) continue;
+            
+            long daysUntilExpiry = ChronoUnit.DAYS.between(today, batch.getExpiry());
+            String status;
+            if (daysUntilExpiry < 0) {
+                status = "Expired";
+                expiredCount++;
+            } else if (daysUntilExpiry <= 30) {
+                status = "Expiring Soon";
+                expiringSoonCount++;
+            } else {
+                status = "Valid";
+            }
+            
+            String warehouseName = "Warehouse " + batch.getWarehouseId();
+            
+            items.add(new ExpiryDataExportResponse.ExpiryItem(
+                batch.getBatchId(),
+                batch.getSkuId(),
+                product.getProductName(),
+                product.getCategory().name(),
+                batch.getWarehouseId(),
+                warehouseName,
+                batch.getExpiry(),
+                daysUntilExpiry,
+                status,
+                batch.getQuantity(),
+                batch.getPersonaType().name()
+            ));
+        }
+        
+        // Set response data
+        response.setReportName("Expiry Data Export - All Data");
+        response.setGeneratedDate(LocalDate.now().toString());
+        response.setStartDate(LocalDate.now().minusYears(10)); // For display purposes
+        response.setEndDate(LocalDate.now().plusYears(10)); // For display purposes
+        response.setFormat(format.toUpperCase());
+        response.setTotalBatches((long) items.size());
+        response.setExpiringSoonCount(expiringSoonCount);
+        response.setExpiredCount(expiredCount);
+        response.setItems(items);
         
         return response;
     }

@@ -230,16 +230,16 @@ export default function GenerateReports() {
   return (
     <div className="space-y-6">
       <div>
-        <h1>Generate Reports</h1>
-        <p className="text-neutral-600 mt-1">Create custom reports for inventory analysis</p>
+        <h1>Reports & Analytics</h1>
+        <p className="text-neutral-600 mt-1">Generate custom reports for inventory analysis</p>
       </div>
 
-      {/* Report Generator */}
+      {/* Generate Reports Section */}
       <div className="bg-white rounded-lg border border-neutral-200">
         <div className="p-6 border-b border-neutral-200">
           <div className="flex items-center gap-2">
             <FileBarChart className="w-5 h-5" />
-            <h2>Report Configuration</h2>
+            <h2>Generate Reports</h2>
           </div>
         </div>
 

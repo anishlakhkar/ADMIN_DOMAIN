@@ -73,6 +73,15 @@ export interface RecentReportResponse {
   downloadUrl: string;
 }
 
+// Export Request
+export interface ExportRequest {
+  exportType: 'full-inventory' | 'low-stock' | 'expiry-data' | 'purchase-orders';
+  startDate?: string; // Optional: ISO date string - if not provided, exports all data
+  endDate?: string; // Optional: ISO date string - if not provided, exports all data
+  format: 'pdf' | 'xlsx' | 'csv';
+  warehouseId?: string; // Optional: filter by warehouse
+}
+
 export const reportService = {
   /**
    * Generate a report
@@ -83,6 +92,18 @@ export const reportService = {
       request
     );
     return response.data;
+  },
+
+  /**
+   * Export data in various formats
+   */
+  exportData: async (request: ExportRequest): Promise<Blob> => {
+    const response = await api.post(
+      '/reports/export',
+      request,
+      { responseType: 'blob' }
+    );
+    return response.data as Blob;
   },
 
   /**

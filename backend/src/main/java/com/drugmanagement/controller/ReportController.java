@@ -1,5 +1,8 @@
 package com.drugmanagement.controller;
 
+import com.drugmanagement.dto.ExportRequest;
+import com.drugmanagement.dto.ExpiryDataExportResponse;
+import com.drugmanagement.dto.FullInventoryExportResponse;
 import com.drugmanagement.dto.InventoryValuationReportResponse;
 import com.drugmanagement.dto.LowStockReportResponse;
 import com.drugmanagement.dto.RecentReportResponse;
@@ -12,6 +15,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 
 @Path("/api/reports")
@@ -196,6 +200,197 @@ public class ReportController {
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(new ErrorResponse("Error downloading report: " + e.getMessage()))
+                .build();
+        }
+    }
+    
+    /**
+     * Export data in various formats
+     * POST /api/reports/export
+     */
+    @POST
+    @Path("/export")
+    public Response exportData(@Valid ExportRequest request) {
+        try {
+            // Validate export type
+            if (!request.getExportType().equals("full-inventory") && 
+                !request.getExportType().equals("low-stock") &&
+                !request.getExportType().equals("expiry-data") &&
+                !request.getExportType().equals("purchase-orders")) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Invalid export type. Must be 'full-inventory', 'low-stock', 'expiry-data', or 'purchase-orders'"))
+                    .build();
+            }
+            
+            // Validate date range if provided (optional - if not provided, all data is exported)
+            if (request.getStartDate() != null && request.getEndDate() != null) {
+                if (request.getStartDate().isAfter(request.getEndDate())) {
+                    return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorResponse("Start date must be before or equal to end date"))
+                        .build();
+                }
+            }
+            
+            // Set default wide date range if not provided to export all data
+            LocalDate startDate = request.getStartDate() != null ? request.getStartDate() : LocalDate.of(2010, 1, 1);
+            LocalDate endDate = request.getEndDate() != null ? request.getEndDate() : LocalDate.of(2050, 12, 31);
+            
+            // Validate format
+            if (!request.getFormat().equalsIgnoreCase("pdf") && 
+                !request.getFormat().equalsIgnoreCase("xlsx") && 
+                !request.getFormat().equalsIgnoreCase("csv")) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Invalid format. Must be 'pdf', 'xlsx', or 'csv'"))
+                    .build();
+            }
+            
+            // Handle Purchase Orders (placeholder for now)
+            if (request.getExportType().equals("purchase-orders")) {
+                return Response.status(Response.Status.NOT_IMPLEMENTED)
+                    .entity(new ErrorResponse("Purchase Orders export will be implemented when PO backend is ready"))
+                    .build();
+            }
+            
+            // Generate export data
+            Object exportResponse;
+            String fileName;
+            byte[] fileContent = null;
+            String contentType = MediaType.APPLICATION_JSON;
+            
+            if (request.getExportType().equals("full-inventory")) {
+                FullInventoryExportResponse response = reportService.generateFullInventoryExport(
+                    startDate, endDate, request.getFormat(), request.getWarehouseId());
+                exportResponse = response;
+                fileName = "Full_Inventory_Export_All_Data";
+                
+                // Generate file
+                if (request.getFormat().equalsIgnoreCase("pdf")) {
+                    try {
+                        fileContent = fileGenerator.generateFullInventoryPDF(response);
+                        contentType = "application/pdf";
+                        fileName += ".pdf";
+                    } catch (IOException e) {
+                        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new ErrorResponse("Error generating PDF: " + e.getMessage()))
+                            .build();
+                    }
+                } else if (request.getFormat().equalsIgnoreCase("xlsx")) {
+                    try {
+                        fileContent = fileGenerator.generateFullInventoryXLSX(response);
+                        contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                        fileName += ".xlsx";
+                    } catch (IOException e) {
+                        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new ErrorResponse("Error generating XLSX: " + e.getMessage()))
+                            .build();
+                    }
+                } else if (request.getFormat().equalsIgnoreCase("csv")) {
+                    try {
+                        fileContent = fileGenerator.generateFullInventoryCSV(response);
+                        contentType = "text/csv";
+                        fileName += ".csv";
+                    } catch (IOException e) {
+                        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new ErrorResponse("Error generating CSV: " + e.getMessage()))
+                            .build();
+                    }
+                }
+            } else if (request.getExportType().equals("low-stock")) {
+                // Reuse Low Stock Report (exports all low stock items)
+                LowStockReportResponse response = reportService.generateLowStockReport(
+                    startDate, endDate, request.getFormat());
+                exportResponse = response;
+                fileName = "Low_Stock_Export_All_Data";
+                
+                // Generate file
+                if (request.getFormat().equalsIgnoreCase("pdf")) {
+                    try {
+                        fileContent = fileGenerator.generateLowStockPDF(response);
+                        contentType = "application/pdf";
+                        fileName += ".pdf";
+                    } catch (IOException e) {
+                        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new ErrorResponse("Error generating PDF: " + e.getMessage()))
+                            .build();
+                    }
+                } else if (request.getFormat().equalsIgnoreCase("xlsx")) {
+                    try {
+                        fileContent = fileGenerator.generateLowStockXLSX(response);
+                        contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                        fileName += ".xlsx";
+                    } catch (IOException e) {
+                        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new ErrorResponse("Error generating XLSX: " + e.getMessage()))
+                            .build();
+                    }
+                } else if (request.getFormat().equalsIgnoreCase("csv")) {
+                    try {
+                        fileContent = fileGenerator.generateLowStockCSV(response);
+                        contentType = "text/csv";
+                        fileName += ".csv";
+                    } catch (IOException e) {
+                        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new ErrorResponse("Error generating CSV: " + e.getMessage()))
+                            .build();
+                    }
+                }
+            } else if (request.getExportType().equals("expiry-data")) {
+                ExpiryDataExportResponse response = reportService.generateExpiryDataExport(
+                    startDate, endDate, request.getFormat(), request.getWarehouseId());
+                exportResponse = response;
+                fileName = "Expiry_Data_Export_All_Data";
+                
+                // Generate file
+                if (request.getFormat().equalsIgnoreCase("pdf")) {
+                    try {
+                        fileContent = fileGenerator.generateExpiryDataPDF(response);
+                        contentType = "application/pdf";
+                        fileName += ".pdf";
+                    } catch (IOException e) {
+                        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new ErrorResponse("Error generating PDF: " + e.getMessage()))
+                            .build();
+                    }
+                } else if (request.getFormat().equalsIgnoreCase("xlsx")) {
+                    try {
+                        fileContent = fileGenerator.generateExpiryDataXLSX(response);
+                        contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                        fileName += ".xlsx";
+                    } catch (IOException e) {
+                        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new ErrorResponse("Error generating XLSX: " + e.getMessage()))
+                            .build();
+                    }
+                } else if (request.getFormat().equalsIgnoreCase("csv")) {
+                    try {
+                        fileContent = fileGenerator.generateExpiryDataCSV(response);
+                        contentType = "text/csv";
+                        fileName += ".csv";
+                    } catch (IOException e) {
+                        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new ErrorResponse("Error generating CSV: " + e.getMessage()))
+                            .build();
+                    }
+                }
+            } else {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Unsupported export type"))
+                    .build();
+            }
+            
+            // Return file if generated
+            if (fileContent != null) {
+                return Response.ok(fileContent)
+                    .header("Content-Disposition", "attachment; filename=\"" + fileName + "\"")
+                    .type(contentType)
+                    .build();
+            } else {
+                return Response.ok(exportResponse).build();
+            }
+            
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(new ErrorResponse("Error exporting data: " + e.getMessage()))
                 .build();
         }
     }
